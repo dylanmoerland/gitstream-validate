@@ -3,6 +3,61 @@ manifest:
   version: 1.0
 
 automations:
+  # Label Backend changes
+  label_backend_changes:
+    if:
+      - {{ changes.backend }}
+    run:
+      - action: add-label@v1
+        args:
+          label: "Backend changed"
+          color: 34495E
+  # Label Frontend changes
+  label_frontend_changes:
+    if:
+      - {{ changes.backend }}
+    run:
+      - action: add-label@v1
+        args:
+          label: "Frontend changed"
+          color: 2ECC71
+  # Label BFF changes
+  label_bff_changes:
+    if:
+      - {{ changes.backend }}
+    run:
+      - action: add-label@v1
+        args:
+          label: "BFF changed"
+          color: 2ECC71
+  # Assign Backend reviewers
+  assign_backend_reviewers:
+    if:
+      - {{ changes.backend }}
+    # Add a specified user and team as reviewers.
+    # Customize the reviewers to match your organization
+    run:
+      - action: add-reviewers@v1
+        args:
+          reviewers: [Polariks-IT/backend]
+      - action: add-comment@v1
+        args:
+          comment: |
+            The Backend team has automatically been added for review because this PR contains changes to the backend
+  # Assign Backend reviewers
+  assign_frontend_reviewers:
+    if:
+      - {{ changes.frontend or changes.bff }}
+    # Add a specified user and team as reviewers.
+    # Customize the reviewers to match your organization
+    run:
+      - action: add-reviewers@v1
+        args:
+          reviewers: [Polariks-IT/frontend]
+      - action: add-comment@v1
+        args:
+          comment: |
+            The Frontend team has automatically been added for review because this PR contains changes to the frontend
   # Automaticly merge when changes are considered safe
   safe_changes:
     # Triggered for any changes that only affect formatting, documentation, tests, or images
