@@ -1,49 +1,68 @@
 # -*- mode: yaml -*-
-
-# +----------------------------------------------------------------------------+
-# | WARNING: This file controls repo automations, use caution when modifying   |
-# +----------------------------------------------------------------------------+
-# | This file contains one or more /:\ gitStream automations:                  |
-# | https:// docs.gitstream.cm                                                 |
-# |                                                                            |
-# | gitStream uses YAML syntax with nunjucks templating via Jinja 2.           |
-# |                                                                            |
-# | Automations follow an "if this, then that" execution format.               |
-# | More info here: https://docs.gitstream.cm/how-it-works/                    |
-# |                                                                            |
-# +----------------------------------------------------------------------------+
-
-# /:\ gitStream Reference Docs: 
-#    Context Variables: https://docs.gitstream.cm/context-variables/
-#    Filter Functions: https://docs.gitstream.cm/filter-functions/
-#    Automation Actions: https://docs.gitstream.cm/automation-actions/
-
 manifest:
   version: 1.0
+
 automations:
-  # Add a label that indicates how many minutes it will take to review the PR.
-  estimated_time_to_review: 
+  # Label Backend changes
+  label_backend_changes:
     if:
-      - true
+      - {{ changes.backend }}
     run:
       - action: add-label@v1
-      # etr is defined in the last section of this example
         args:
-          label: "{{ calc.etr }} min review"
-          color: {{ 'E94637' if (calc.etr >= 20) else ('FBBD10' if (calc.etr >= 5) else '36A853') }}
-  # Post a comment that lists the best experts for the files that were modified.
-  explain_code_experts:
+          label: "Backend changed"
+          color: 34495E
+  # Label Frontend changes
+  label_frontend_changes:
     if:
-      - true
+      - {{ changes.backend }}
     run:
-      - action: explain-code-experts@v1 
+      - action: add-label@v1
         args:
-          gt: 10 
+          label: "Frontend changed"
+          color: 2ECC71
+  # Label BFF changes
+  label_bff_changes:
+    if:
+      - {{ changes.backend }}
+    run:
+      - action: add-label@v1
+        args:
+          label: "BFF changed"
+          color: 2ECC71
+  # Assign Backend reviewers
+  assign_backend_reviewers:
+    if:
+      - {{ changes.backend }}
+    # Add a specified user and team as reviewers.
+    # Customize the reviewers to match your organization
+    run:
+      - action: add-reviewers@v1
+        args:
+          reviewers: [Polariks-IT/backend]
+      - action: add-comment@v1
+        args:
+          comment: |
+            The Backend team has automatically been added for review because this PR contains changes to the backend
+  # Assign Backend reviewers
+  assign_frontend_reviewers:
+    if:
+      - {{ changes.frontend or changes.bff }}
+    # Add a specified user and team as reviewers.
+    # Customize the reviewers to match your organization
+    run:
+      - action: add-reviewers@v1
+        args:
+          reviewers: [Polariks-IT/frontend]
+      - action: add-comment@v1
+        args:
+          comment: |
+            The Frontend team has automatically been added for review because this PR contains changes to the frontend
   # Automaticly merge when changes are considered safe
   safe_changes:
     # Triggered for any changes that only affect formatting, documentation, tests, or images
     if:
-      - {{ is.formatting or is.docs or is.tests or is.image or is.onlyTranslations }}
+      - {{ is.formatting or is.docs or is.tests or is.image or is.translations }}
     # Apply a safe change label, approve the PR and explain why in a comment.
     run: 
       - action: add-label@v1
@@ -71,11 +90,29 @@ automations:
   # Add double review policy when multiple disciplines 
   double_review:
     if:
-      - {{ is.backend and is.frontend }}
+      - {{ changes.backend and changes.frontend }}
     run:
       - action: set-required-approvals@v1
         args:
           approvals: 2
+  # Add a label that indicates how many minutes it will take to review the PR.
+  estimated_time_to_review: 
+    if:
+      - true
+    run:
+      - action: add-label@v1
+      # etr is defined in the last section of this example
+        args:
+          label: "{{ calc.etr }} min review"
+          color: {{ 'E94637' if (calc.etr >= 20) else ('FBBD10' if (calc.etr >= 5) else '36A853') }}
+  # Post a comment that lists the best experts for the files that were modified.
+  explain_code_experts:
+    if:
+      - true
+    run:
+      - action: explain-code-experts@v1 
+        args:
+          gt: 10
 
 # The next function calculates the estimated time to review and makes it available in the automation above.
 calc:
@@ -86,14 +123,17 @@ changes:
   additions: {{ branch.diff.files_metadata | map(attr='additions') | sum }}
   # Sum all the line removed in the PR
   deletions: {{ branch.diff.files_metadata | map(attr='deletions') | sum }}
+  # Has backend changes
+  backend: {{ files | match(regex=r/backend\//) | some }}
+  # Has bff changes
+  bff: {{ files | match(regex=r/bff\//) | some }}
+  # Has frontend changes
+  frontend: {{ files | match(regex=r/frontend\//) | some }}
 
 is:
   formatting: {{ source.diff.files | isFormattingChange }}
   docs: {{ files | allDocs }}
   tests: {{ files | allTests }}
   image: {{ files | allImages }}
-  onlyTranslations: {{ files | match(regex=r/translations\//) | all }}
-  backend: {{ files | match(regex=r/backend\//) | some }}
-  bff: {{ files | match(regex=r/bff\//) | some }}
-  frontend: {{ files | match(regex=r/frontend\//) | some }}
+  translations: {{ files | match(regex=r/translations\//) | every }}
   tiny: {{ changes.additions - changes.deletions <= 5 }}
