@@ -81,6 +81,8 @@ automations:
 calc:
   etr: {{ branch | estimatedReviewTime }}
 
+# test
+
 # changes:
 #   # Sum all the lines added in the PR
 #   additions: {{ branch.diff.files_metadata | map(attr='additions') | sum }}
