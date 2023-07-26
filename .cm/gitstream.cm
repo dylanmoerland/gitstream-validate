@@ -39,43 +39,43 @@ automations:
       - action: explain-code-experts@v1 
         args:
           gt: 10 
-  # Automaticly merge when changes are considered safe
-  safe_changes:
-    # Triggered for any changes that only affect formatting, documentation, tests, or images
-    if:
-      - {{ is.formatting or is.docs or is.tests or is.image or is.onlyTranslations }}
-    # Apply a safe change label, approve the PR and explain why in a comment.
-    run: 
-      - action: add-label@v1
-        args:
-          label: 'safe-change'
-      - action: approve@v1
-      - action: add-comment@v1
-        args:
-          comment: |
-            This PR is considered a safe change and has been automatically approved.
-  # Automaticly merge tiny changes (a change is tiny when less then 5 lines)
-  approve_tiny_change:
-    # Triggered for PRs that contain one file and one line.
-    if:
-      - {{ is.tiny }}
-    run:
-      - action: add-label@v1
-        args:
-          label: 'single-line'
-      - action: approve@v1
-      - action: add-comment@v1
-        args:
-          comment: |
-            This PR has been approved because it is only a single line
-  # Add double review policy when multiple disciplines 
-  double_review:
-    if:
-      - {{ is.backend and is.frontend }}
-    run:
-      - action: set-required-approvals@v1
-        args:
-          approvals: 2
+  # # Automaticly merge when changes are considered safe
+  # safe_changes:
+  #   # Triggered for any changes that only affect formatting, documentation, tests, or images
+  #   if:
+  #     - {{ is.formatting or is.docs or is.tests or is.image or is.onlyTranslations }}
+  #   # Apply a safe change label, approve the PR and explain why in a comment.
+  #   run: 
+  #     - action: add-label@v1
+  #       args:
+  #         label: 'safe-change'
+  #     - action: approve@v1
+  #     - action: add-comment@v1
+  #       args:
+  #         comment: |
+  #           This PR is considered a safe change and has been automatically approved.
+  # # Automaticly merge tiny changes (a change is tiny when less then 5 lines)
+  # approve_tiny_change:
+  #   # Triggered for PRs that contain one file and one line.
+  #   if:
+  #     - {{ is.tiny }}
+  #   run:
+  #     - action: add-label@v1
+  #       args:
+  #         label: 'single-line'
+  #     - action: approve@v1
+  #     - action: add-comment@v1
+  #       args:
+  #         comment: |
+  #           This PR has been approved because it is only a single line
+  # # Add double review policy when multiple disciplines 
+  # double_review:
+  #   if:
+  #     - {{ is.backend and is.frontend }}
+  #   run:
+  #     - action: set-required-approvals@v1
+  #       args:
+  #         approvals: 2
 
 # The next function calculates the estimated time to review and makes it available in the automation above.
 calc:
