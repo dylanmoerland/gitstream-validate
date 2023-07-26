@@ -81,19 +81,19 @@ automations:
 calc:
   etr: {{ branch | estimatedReviewTime }}
 
-changes:
-  # Sum all the lines added in the PR
-  additions: {{ branch.diff.files_metadata | map(attr='additions') | sum }}
-  # Sum all the line removed in the PR
-  deletions: {{ branch.diff.files_metadata | map(attr='deletions') | sum }}
+# changes:
+#   # Sum all the lines added in the PR
+#   additions: {{ branch.diff.files_metadata | map(attr='additions') | sum }}
+#   # Sum all the line removed in the PR
+#   deletions: {{ branch.diff.files_metadata | map(attr='deletions') | sum }}
 
-is:
-  formatting: {{ source.diff.files | isFormattingChange }}
-  docs: {{ files | allDocs }}
-  tests: {{ files | allTests }}
-  image: {{ files | allImages }}
-  onlyTranslations: {{ files | match(regex=r/translations\//) | all }}
-  backend: {{ files | match(regex=r/backend\//) | some }}
-  bff: {{ files | match(regex=r/bff\//) | some }}
-  frontend: {{ files | match(regex=r/frontend\//) | some }}
-  tiny: {{ changes.additions - changes.deletions <= 5 }}
+# is:
+#   formatting: {{ source.diff.files | isFormattingChange }}
+#   docs: {{ files | allDocs }}
+#   tests: {{ files | allTests }}
+#   image: {{ files | allImages }}
+#   onlyTranslations: {{ files | match(regex=r/translations\//) | all }}
+#   backend: {{ files | match(regex=r/backend\//) | some }}
+#   bff: {{ files | match(regex=r/bff\//) | some }}
+#   frontend: {{ files | match(regex=r/frontend\//) | some }}
+#   tiny: {{ changes.additions - changes.deletions <= 5 }}
