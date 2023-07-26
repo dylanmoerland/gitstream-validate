@@ -1,9 +1,45 @@
 # -*- mode: yaml -*-
-# This example configuration for provides basic automations to get started with gitStream.
-# View the gitStream quickstart for more examples: https://docs.gitstream.cm/quick-start/
 manifest:
   version: 1.0
+
 automations:
+  # Automaticly merge when changes are considered safe
+  safe_changes:
+    # Triggered for any changes that only affect formatting, documentation, tests, or images
+    if:
+      - {{ is.formatting or is.docs or is.tests or is.image or is.translations }}
+    # Apply a safe change label, approve the PR and explain why in a comment.
+    run: 
+      - action: add-label@v1
+        args:
+          label: 'safe-change'
+      - action: approve@v1
+      - action: add-comment@v1
+        args:
+          comment: |
+            This PR is considered a safe change and has been automatically approved.
+  # Automaticly merge tiny changes (a change is tiny when less then 5 lines)
+  approve_tiny_change:
+    # Triggered for PRs that contain one file and one line.
+    if:
+      - {{ is.tiny }}
+    run:
+      - action: add-label@v1
+        args:
+          label: 'single-line'
+      - action: approve@v1
+      - action: add-comment@v1
+        args:
+          comment: |
+            This PR has been approved because it is only a single line
+  # Add double review policy when multiple disciplines 
+  double_review:
+    if:
+      - {{ changes.backend and changes.frontend }}
+    run:
+      - action: set-required-approvals@v1
+        args:
+          approvals: 2
   # Add a label that indicates how many minutes it will take to review the PR.
   estimated_time_to_review: 
     if:
@@ -21,7 +57,28 @@ automations:
     run:
       - action: explain-code-experts@v1 
         args:
-          gt: 10 
+          gt: 10
+
 # The next function calculates the estimated time to review and makes it available in the automation above.
 calc:
   etr: {{ branch | estimatedReviewTime }}
+
+changes:
+  # Sum all the lines added in the PR
+  additions: {{ branch.diff.files_metadata | map(attr='additions') | sum }}
+  # Sum all the line removed in the PR
+  deletions: {{ branch.diff.files_metadata | map(attr='deletions') | sum }}
+  # Has backend changes
+  backend: {{ files | match(regex=r/backend\//) | some }}
+  # Has bff changes
+  bff: {{ files | match(regex=r/bff\//) | some }}
+  # Has frontend changes
+  frontend: {{ files | match(regex=r/frontend\//) | some }}
+
+is:
+  formatting: {{ source.diff.files | isFormattingChange }}
+  docs: {{ files | allDocs }}
+  tests: {{ files | allTests }}
+  image: {{ files | allImages }}
+  translations: {{ files | match(regex=r/translations\//) | every }}
+  tiny: {{ changes.additions - changes.deletions <= 5 }}
